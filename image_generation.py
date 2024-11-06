@@ -135,16 +135,14 @@ def generate_images(model_name, dataset_path, num_images_to_generate, device, ba
             else:
                 images = pipe(prompt,generator=torch.Generator(device).manual_seed(seed),num_images_per_prompt=batch_size)['images']
         
-            # Save the generated images using the predetermined paths
             for img, img_path in zip(images, batch):
                 img.save(img_path)
-            # exit()
-        
+
         if not os.path.exists(os.path.join(dirpath, "grid_images.jpg")):
             create_img_grid(dirpath)
+        
 
-
-def create_img_grid(dirpath, image_size=(100, 100), output_filename='grid_images.jpg'):
+def create_img_grid(dirpath, output_filename='grid_images.jpg'):
     """
     Creates and saves a grid image from all PNG images in the specified directory.
 
@@ -171,41 +169,16 @@ def create_img_grid(dirpath, image_size=(100, 100), output_filename='grid_images
         print("No images found. Exiting.")
         return
 
-    if num_images == 0:
-        grid_width, grid_height = 0, 0
-    
     grid_width = math.ceil(math.sqrt(num_images))
     grid_height = math.ceil(num_images / grid_width)
     print(f"Grid dimensions: {grid_width}x{grid_height} (width x height)")
 
     total_slots = grid_width * grid_height
     if num_images < total_slots:
-        blank_image = Image.new('RGB', image_size, color=(255, 255, 255))
+        blank_image = Image.new('RGB', images[0].size, color=(255, 255, 255))
         images.extend([blank_image] * (total_slots - num_images))
 
-    grid = make_image_grid(images, grid_width, grid_height, image_size)
+    grid = make_image_grid(images, grid_width, grid_height)
     output_path = os.path.join(dirpath, output_filename)
     grid.save(output_path)
     print(f"Grid image saved to {output_path}")
-
-
-if __name__ == '__main__':
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--model_name", choices=['sdxl', 'sdxl-turbo', 'sd-1.4', 'sd-2.1', 'lcm-sdxl', 'deepfloyd-xl', 'deepfloyd-l', 'deepfloyd-m','sd-3', 'sd-1.1', 'flux-schnell', 'flux-dev'], default='sdxl')
-    parser.add_argument("--gpu_id", default=0)
-    parser.add_argument("--dataset_name", default="100_200_concepts_prompts") # 1000_compbench_v2/datasets/1000_compbench_sentences.csv
-    parser.add_argument("--num_images_per_prompt", default=100)
-    parser.add_argument("--batch_size", default=1)
-
-    args = parser.parse_args()
-    model_name = args.model_name
-    dataset_path = os.path.join("datasets", args.dataset_name + ".csv")
-    b_size = args.batch_size
-    if b_size:
-        b_size = int(b_size)
-    generate_images(model_name, dataset_path, int(args.num_images_per_prompt), args.gpu_id, b_size)
-
- 
-    
-

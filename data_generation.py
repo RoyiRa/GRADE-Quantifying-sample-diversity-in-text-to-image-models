@@ -2,7 +2,7 @@ from openai import OpenAI
 from utils import load_oai_key
 import pandas as pd
 import os
-
+from typing import List
 
 client = OpenAI(api_key=load_oai_key())    
 MODEL = "gpt-4o"
@@ -192,20 +192,20 @@ def generate_attribute_values():
         concepts_attribute_values.append({
             'concept_id': c_id,
             'concept': concept,
-            'caption_id': caption_id,
-            'caption': caption,
+            'prompt_id': caption_id,
+            'prompt': caption,
             'question_id': q_id,
             'question': question,
             'attribute_values': attribute_values
         })
 
     concepts_attribute_values_df = pd.DataFrame(concepts_attribute_values)
-    concepts_attribute_values_df.to_csv("datasets/concepts_attribute_values.csv", index=False)
+    concepts_attribute_values_df.to_csv("datasets/unfiltered_concepts_dataset.csv", index=False)
 
 
 
 def filter_duplicate_attribute_values():
-    df = pd.read_csv("datasets/concepts_attribute_values.csv")
+    df = pd.read_csv("datasets/unfiltered_concepts_dataset.csv")
     df['attribute_values'] = df['attribute_values'].apply(eval)
 
     attribute_values_dict = {}  # Initialize an empty dictionary to store results
@@ -267,49 +267,37 @@ def filter_duplicate_attribute_values():
         if filtered_list:
             filtered_attribute_values[key] = filtered_list
 
-        print(f"Question: {question}")
-        print(f"Attribute values: {attribute_values}")
-        print(f"Filtered attribute values: {filtered_attribute_values[key]}")
-        print()
+            print(f"Question: {question}")
+            print(f"Attribute values: {attribute_values}")
+            print(f"Filtered attribute values: {filtered_attribute_values[key]}")
+            print()
 
 
 
     # Create DataFrame from filtered_attribute_values
     filtered_df = pd.DataFrame({
-        'concept': [concept for (concept, question) in filtered_attribute_values.keys()],
-        'question': [question for (concept, question) in filtered_attribute_values.keys()],
+        'concept': [concept for (concept, _) in filtered_attribute_values.keys()],
+        'question': [question for (_, question) in filtered_attribute_values.keys()],
         'attribute_values': [filtered_attribute_values[(concept, question)] for (concept, question) in filtered_attribute_values.keys()]
     })
 
     # Get unique rows from df with the additional columns
-    df_unique = df[['concept', 'question', 'concept_id', 'question_id', 'caption', 'caption_id']].drop_duplicates()
+    df_unique = df[['concept', 'question', 'concept_id', 'question_id', 'prompt', 'prompt_id']].drop_duplicates()
 
     # Merge filtered_df with df_unique on ['concept', 'question']
     final_df = filtered_df.merge(df_unique, on=['concept', 'question'], how='left')
 
     # Reorder columns
-    final_df = final_df[['concept', 'question', 'concept_id', 'question_id', 'caption', 'caption_id', 'attribute_values']]
+    final_df = final_df[['concept', 'question', 'concept_id', 'question_id', 'prompt', 'prompt_id', 'attribute_values']]
 
     
     # Save to CSV without index
-    final_df.to_csv("datasets/filtered_attribute_values.csv", index=False)
+    final_df.to_csv("datasets/concepts_dataset.csv", index=False)
 
     
-
-
-        
-
-
-
-    
-if __name__ == "__main__":
-    concepts = ["a helmet", "a bin", "a telescope", "a rug", "a parachute", "a bottle", "yogurt", "corn", "a cookie jar", "an egg", "a present", "a detective"]
+def generate_data(concepts: List[str]):
+    print(f'Starting...')
     generate_prompts(concepts)
     generate_attributes()
     generate_attribute_values()
     filter_duplicate_attribute_values()
-
-
-
-
-  
