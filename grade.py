@@ -4,6 +4,7 @@ import sys
 from data_generation import generate_data
 from image_generation import generate_images
 from vqa import extract_attribute_values
+from distribution_estimation import compute_diversity_score
 
 def load_concepts(concepts_path):
     """
@@ -97,20 +98,22 @@ def main():
             print(f"Using existing dataset at '{dataset_path}'.")
 
     # Step 2: Generate images based on the determined dataset_path
-    # generate_images(
-    #     model_name=args.model_name,
-    #     dataset_path=dataset_path,
-    #     num_images_to_generate=args.num_images_per_prompt,
-    #     device=args.gpu_id,
-    #     batch_size=args.batch_size
-    # )
+    generate_images(
+        model_name=args.model_name,
+        dataset_path=dataset_path,
+        num_images_to_generate=args.num_images_per_prompt,
+        device=args.gpu_id,
+        batch_size=args.batch_size
+    )
 
     # Step 3: Extract attribute values from the generated images
     results_dir = os.path.join("results", args.model_name, dataset_name)
     generated_images_path = os.path.join("generated_images", args.model_name, dataset_name)
     extract_attribute_values(dataset_path, args.vqa_model, generated_images_path, results_dir)
 
-    # Step 4: Assess diversity 
-
+    # Step 4: Assess diversity for multi-prompt distributions
+    extracted_attribute_values_path = os.path.join(results_dir, 'extracted_attribute_values.csv')
+    compute_diversity_score(extracted_attribute_values_path, is_single_prompt_dist=False) # change is_single_prompt_dist to True for single-prompt distributions
+    
 if __name__ == "__main__":
     main()

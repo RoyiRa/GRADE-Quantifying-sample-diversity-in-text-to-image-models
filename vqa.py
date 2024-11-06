@@ -15,8 +15,10 @@ def extract_attribute_values(concepts_dataset_path, vqa_model, generated_images_
 
  
     df = pd.read_csv(concepts_dataset_path.replace(".csv", "_with_images.csv"))
-    # convert to list
-    df["attribute_values"] = df['attribute_values'].apply(lambda x: eval(x))
+    
+    # add None of the above to the attribute values
+    df["attribute_values"] = df['attribute_values'].apply(lambda x: eval(x.strip().lower()))
+    df['attribute_values'] = df['attribute_values'].apply(lambda x: x.append("None of the above"))
     
     new_rows = []
     for _, row in df.iterrows():
