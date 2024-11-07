@@ -70,6 +70,19 @@ def main():
         default="gpt-4o",
         help="Name of the model to use for VQA."
     )
+    parser.add_argument(
+        "--compute_for_single_prompt_distributions",
+        type=bool,
+        default=False,
+        help="Compute diversity over a single prompt or multiple prompts."
+    )
+
+    parser.add_argument(
+        "--report_default_behaviors",
+        type=bool,
+        default=False,
+        help="Report the default behaviors for the measured concepts."
+    )
     
     args = parser.parse_args()
 
@@ -113,7 +126,12 @@ def main():
 
     # Step 4: Assess diversity for multi-prompt distributions
     extracted_attribute_values_path = os.path.join(results_dir, 'extracted_attribute_values.csv')
-    compute_diversity_score(extracted_attribute_values_path, is_single_prompt_dist=False) # change is_single_prompt_dist to True for single-prompt distributions
+    diversity_score = compute_diversity_score(extracted_attribute_values_path, is_single_prompt_dist=args.compute_for_single_prompt_distributions) # change is_single_prompt_dist to True for single-prompt distributions
+    print(f"The diversity score of {args.model_name} is {diversity_score}")
+
+    # Step 5 (optional): Report default behaviors
+    if args.report_default_behaviors:
+        report_default_behaviors(os.path.join(results_dir, 'extracted_attribute_values.csv'), results_dir, is_single_prompt_dist=args.compute_for_single_prompt_distributions)
     
 if __name__ == "__main__":
     main()
