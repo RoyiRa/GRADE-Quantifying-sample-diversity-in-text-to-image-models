@@ -141,16 +141,4 @@ def compute_diversity_score(filename, is_single_prompt_dist=False):
 
 
     mean_normalized_entropy = sum(normalized_entropies) / len(normalized_entropies)
-    print(f"Mean Normalized Entropy: {mean_normalized_entropy}")
-
-    return distributions, entropies_as_dict
-
-
-
-if __name__ == "__main__":
-    pass
-    model_name = 'flux-schnell'
-    dataset_name = "concepts_dataset"
-    results_dir = os.path.join("results", model_name, dataset_name)
-    report_default_behaviors(os.path.join(results_dir, 'extracted_attribute_values.csv'), results_dir, is_single_prompt_dist=False)
-    compute_diversity_score(os.path.join(results_dir, 'extracted_attribute_values.csv'), is_single_prompt_dist=False)
+    return mean_normalized_entropy
