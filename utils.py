@@ -3,15 +3,16 @@ from typing import Optional
 
 
 def load_paths_for_prompt_id(dirpath: str, max_seed: Optional[int] = None):
-    # load all images from path:
     imagepaths = []
     for root, dirs, files in os.walk(dirpath):
         for file in files:
-            if file.endswith('.png'):
+            # a variety of image suffixes
+            if file.endswith('.png') or file.endswith('.jpg') or file.endswith('.jpeg'):
                 if max_seed and int(file.split('_')[0]) >= int(max_seed):
                     print(f"Reached max seed: {max_seed}. Stopping image loading now.")
                     break
                 imagepaths.append(os.path.join(root, file))
+    print(f"Images found in total: {len(imagepaths)}")
     return imagepaths
 
 

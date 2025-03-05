@@ -4,7 +4,7 @@ import sys
 from data_generation import generate_data
 from image_generation import generate_images
 from vqa import extract_attribute_values
-from distribution_estimation import compute_diversity_score
+from distribution_estimation import compute_GRADEScore, report_default_behaviors
 
 def load_concepts(concepts_path):
     """
@@ -28,7 +28,7 @@ def main():
         choices=[
             'sdxl', 'sdxl-turbo', 'sd-1.4', 'sd-2.1', 'lcm-sdxl',
             'deepfloyd-xl', 'deepfloyd-l', 'deepfloyd-m', 'sd-3',
-            'sd-1.1', 'flux-schnell', 'flux-dev'
+            'sd-1.1', 'flux-schnell', 'flux-dev', 'google-search'
         ],
         default='sdxl',
         help="Name of the model you want to assess."
@@ -73,7 +73,7 @@ def main():
     parser.add_argument(
         "--compute_for_single_prompt_distributions",
         type=bool,
-        default=False,
+        default=True,
         help="Compute diversity over a single prompt or multiple prompts."
     )
 
@@ -86,7 +86,7 @@ def main():
     
     args = parser.parse_args()
 
-    # Step 1: generate prompts, attributes, and attribute values
+    # # Step 1: generate prompts, attributes, and attribute values
     if not args.concepts_path and not args.dataset_name:
         parser.error("At least one of --concepts_path or --dataset_name must be provided.")
 
@@ -126,8 +126,8 @@ def main():
 
     # Step 4: Assess diversity for multi-prompt distributions
     extracted_attribute_values_path = os.path.join(results_dir, 'extracted_attribute_values.csv')
-    diversity_score = compute_diversity_score(extracted_attribute_values_path, is_single_prompt_dist=args.compute_for_single_prompt_distributions) # change is_single_prompt_dist to True for single-prompt distributions
-    print(f"The diversity score of {args.model_name} is {diversity_score}")
+    gradescore = compute_GRADEScore(extracted_attribute_values_path, is_single_prompt_dist=args.compute_for_single_prompt_distributions) # change is_single_prompt_dist to True for single-prompt distributions
+    print(f"The GRADEScore of {args.model_name} is {gradescore}")
 
     # Step 5 (optional): Report default behaviors
     if args.report_default_behaviors:

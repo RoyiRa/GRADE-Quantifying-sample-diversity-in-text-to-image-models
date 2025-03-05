@@ -29,9 +29,9 @@ def extract_default_behaviors(filename, results_dir, is_single_prompt_dist=False
     df = load_model_predictions(filename)
 
     if is_single_prompt_dist:
-        result = df.groupby(['prompt', 'question'])['answer'].apply(default_behavior_threshold).reset_index()
+        result = df.groupby(['prompt', 'attribute'])['answer'].apply(default_behavior_threshold).reset_index()
     else:
-        result = df.groupby(['concept', 'question'])['answer'].apply(default_behavior_threshold).reset_index()
+        result = df.groupby(['concept', 'attribute'])['answer'].apply(default_behavior_threshold).reset_index()
   
     result[['has_dominant', 'default_behavior', 'percentile']] = pd.DataFrame(result['answer'].tolist(), index=result.index)
     result.drop(columns=['answer'], inplace=True)
@@ -82,6 +82,8 @@ def create_distributions(filename, is_single_prompt_dist=False):
         answer_counts = {}
         attribute_values = group['attribute_values'].iloc[0] # Assume all rows in a group have the same set
         for answer in attribute_values:
+            if answer == 'none of the above' or answer == 'neither':
+                continue
             answer_counts[answer] = 0
             
 
@@ -91,9 +93,9 @@ def create_distributions(filename, is_single_prompt_dist=False):
                 answer_counts[answer] += 1
     
             if is_single_prompt_dist:
-                key = f"{group['prompt'].iloc[0]}_{group['question'].iloc[0]}"
+                key = f"{group['prompt'].iloc[0]}_{group['attribute'].iloc[0]}"
             else:
-                key = f"{group['concept'].iloc[0]}_{group['question'].iloc[0]}"
+                key = f"{group['concept'].iloc[0]}_{group['attribute'].iloc[0]}"
                 
             if answer not in answer_counts:   
                 if key in out_of_scope_answers:
@@ -104,14 +106,13 @@ def create_distributions(filename, is_single_prompt_dist=False):
         total = sum(answer_counts.values())
         for key, count in answer_counts.items():
             answer_counts[key] = count / total
-
         return answer_counts
     
     # Choose the appropriate grouping columns
     if is_single_prompt_dist:
-        grouping_columns = ['prompt', 'question']
+        grouping_columns = ['prompt', 'attribute']
     else:
-        grouping_columns = ['concept', 'question']
+        grouping_columns = ['concept', 'attribute']
 
     result = df.groupby(grouping_columns).apply(
         lambda group: count_answers(group, group.name)
@@ -121,24 +122,29 @@ def create_distributions(filename, is_single_prompt_dist=False):
     return distributions
 
 
-def compute_diversity_score(filename, is_single_prompt_dist=False):
+def compute_GRADEScore(filename, is_single_prompt_dist=False):
     distributions = create_distributions(filename, is_single_prompt_dist)
     normalized_entropies = []
     entropies_as_dict = {}
     
     for key, dist in distributions.items():
         probabilities = [count for count in dist.values()]
+        print(f"Probabilities for {key}: {probabilities}")
         entropy = -sum(p * math.log2(p) for p in probabilities if p > 0)  # Avoid log(0) error
+        print(entropy)
 
         num_answers = len(dist)
         if num_answers > 1:  # Avoid log(0) error when there's only one type of answer
             max_possible_entropy = math.log2(num_answers)
+            print(max_possible_entropy)
             normalized_entropy = entropy / max_possible_entropy
+            print(normalized_entropies)
         else:
             normalized_entropy = 0
         normalized_entropies.append(normalized_entropy)
         entropies_as_dict[key] = normalized_entropy
-
+    for key, value in entropies_as_dict.items():
+        print(f"{key}: {value}")
 
     mean_normalized_entropy = sum(normalized_entropies) / len(normalized_entropies)
     return mean_normalized_entropy
