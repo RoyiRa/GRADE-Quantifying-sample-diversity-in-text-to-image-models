@@ -57,7 +57,7 @@ def add_images_to_csv(concepts_dataset_path, generated_images_path):
     # Create a new DataFrame from the new rows
     new_df = pd.DataFrame(new_rows)    
     # Useful if you choose to use batch-inference
-    new_df['image_name'] = new_df['local_imagepath'].apply(lambda x: x.split('/')[-1].replace(".jpeg", ""))
+    new_df['image_name'] = new_df['local_imagepath'].apply(lambda x: x.split('/')[-1].replace(".png", ""))
 
 
 

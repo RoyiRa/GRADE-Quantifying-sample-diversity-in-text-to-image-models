@@ -124,12 +124,12 @@ def generate_attributes():
             concepts_questions.append({
                 'concept_id': c_id,
                 'concept': concept,
-                'question': question
+                'attribute': question
             })
         seen_ids.add(c_id)
     concepts_questions_df = pd.DataFrame(concepts_questions)
     # add question_id column
-    concepts_questions_df['question_id'] = concepts_questions_df.index
+    concepts_questions_df['attribute_id'] = concepts_questions_df.index
     concepts_questions_df.to_csv("datasets/concepts_questions.csv", index=False)
      
   
@@ -140,9 +140,9 @@ def generate_attribute_values():
 
 
     captions = df['prompt'].tolist()
-    questions = df['question'].tolist()
+    questions = df['attribute'].tolist()
     caption_ids = df['prompt_id'].tolist()
-    question_ids = df['question_id'].tolist()
+    question_ids = df['attribute_id'].tolist()
     concept_ids = df['concept_id'].tolist()
     concepts = df['concept'].tolist()
 
@@ -194,8 +194,8 @@ def generate_attribute_values():
             'concept': concept,
             'prompt_id': caption_id,
             'prompt': caption,
-            'question_id': q_id,
-            'question': question,
+            'attribute_id': q_id,
+            'attribute': question,
             'attribute_values': attribute_values
         })
 
@@ -210,7 +210,7 @@ def filter_duplicate_attribute_values():
 
     attribute_values_dict = {}  # Initialize an empty dictionary to store results
 
-    for (concept, question), group in df.groupby(['concept', 'question']):
+    for (concept, question), group in df.groupby(['concept', 'attribute']):
         attribute_values = group['attribute_values'].tolist()        
         attribute_values = [item.lower() for sublist in attribute_values for item in sublist]
         attribute_values = list(set(attribute_values))
@@ -277,18 +277,18 @@ def filter_duplicate_attribute_values():
     # Create DataFrame from filtered_attribute_values
     filtered_df = pd.DataFrame({
         'concept': [concept for (concept, _) in filtered_attribute_values.keys()],
-        'question': [question for (_, question) in filtered_attribute_values.keys()],
+        'attribute': [question for (_, question) in filtered_attribute_values.keys()],
         'attribute_values': [filtered_attribute_values[(concept, question)] for (concept, question) in filtered_attribute_values.keys()]
     })
 
     # Get unique rows from df with the additional columns
-    df_unique = df[['concept', 'question', 'concept_id', 'question_id', 'prompt', 'prompt_id']].drop_duplicates()
+    df_unique = df[['concept', 'attribute', 'concept_id', 'attribute_id', 'prompt', 'prompt_id']].drop_duplicates()
 
     # Merge filtered_df with df_unique on ['concept', 'question']
-    final_df = filtered_df.merge(df_unique, on=['concept', 'question'], how='left')
+    final_df = filtered_df.merge(df_unique, on=['concept', 'attribute'], how='left')
 
     # Reorder columns
-    final_df = final_df[['concept', 'question', 'concept_id', 'question_id', 'prompt', 'prompt_id', 'attribute_values']]
+    final_df = final_df[['concept', 'attribute', 'concept_id', 'attribute_id', 'prompt', 'prompt_id', 'attribute_values']]
 
     
     # Save to CSV without index
